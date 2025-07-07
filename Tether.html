@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>USDT Transfer | OP MAINNET</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: #f4f6fa;
+      color: #333;
+    }
+
+    #pageLoader {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 9999;
+    }
+
+    .loader-circle {
+      border: 6px solid #eee;
+      border-top: 6px solid #00b894;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      animation: spin 1s linear infinite;
+    }
+
+    .loader-text {
+      margin-top: 15px;
+      font-size: 15px;
+      color: #666;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .container {
+      display: none;
+      min-height: 100vh;
+      padding: 30px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 10px;
+      color: #00b894;
+    }
+
+    p {
+      font-size: 15px;
+      margin-bottom: 15px;
+      color: #444;
+    }
+
+    .important-note {
+      background: #fff9e6;
+      color: #b85c00;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      border: 1px solid #f4d180;
+    }
+
+    .address-box {
+      background: #f0fdf9;
+      border: 1px dashed #00b894;
+      padding: 12px;
+      font-weight: 500;
+      font-size: 14px;
+      border-radius: 8px;
+      position: relative;
+      color: #00695c;
+      margin-bottom: 10px;
+    }
+
+    .copy-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      font-size: 12px;
+      padding: 3px 8px;
+      background: #00b894;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      background: #019c7c;
+    }
+
+    #copyTooltip {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 15px;
+    }
+
+    #timer {
+      font-weight: bold;
+      font-size: 15px;
+      color: #d63031;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 25px;
+      background: #00b894;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #019c7c;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.96);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 1000;
+    }
+
+    .payment-loader {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(#00b894 0% 25%, #ccc 25% 100%);
+      animation: rotate 1.2s linear infinite;
+    }
+
+    @keyframes rotate {
+      to { transform: rotate(360deg); }
+    }
+
+    .fail-message {
+      display: none;
+      margin-top: 25px;
+      font-size: 18px;
+      color: #d63031;
+      font-weight: bold;
+    }
+
+    @media (max-width: 500px) {
+      .card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Full Page Loader -->
+  <div id="pageLoader">
+    <div class="loader-circle"></div>
+    <div class="loader-text">Authenticating Payment Gateway...</div>
+  </div>
+
+  <!-- Main Payment Area -->
+  <div class="container" id="mainPage">
+    <div class="card">
+      <h1>USDT TRANSFER REQUIRED</h1>
+
+      <div class="important-note">
+        NETWORK: OP MAINNET — You must use this network.
+      </div>
+
+      <p>Transfer $2.99 to the address below:</p>
+
+      <div class="address-box" id="usdtAddress">
+        <button class="copy-btn" onclick="copyAddress()">Copy</button>
+        <span id="address">0xb7779d72c00981fa6f21dfe0810acdaf18c12b5f</span>
+      </div>
+
+      <div id="copyTooltip">Tap “Copy” to copy address</div>
+
+      <div id="timer">Expires in : 15:00</div>
+
+      <button onclick="submitPayment()">I HAVE MADE PAYMENT</button>
+    </div>
+  </div>
+
+  <!-- Loading on Submit -->
+  <div class="overlay" id="paymentOverlay">
+    <div class="payment-loader"></div>
+    <div class="fail-message" id="failText">❌ Transaction Failed. Payment not completed.</div>
+  </div>
+
+  <script>
+    // Page loader
+    window.onload = function () {
+      setTimeout(() => {
+        document.getElementById('pageLoader').style.display = 'none';
+        document.getElementById('mainPage').style.display = 'flex';
+      }, 1800);
+      startCountdown();
+    };
+
+    // Countdown logic with persistence
+    function startCountdown() {
+      const timerEl = document.getElementById('timer');
+      let endTime = localStorage.getItem('countdownEndTime');
+
+      if (!endTime) {
+        const now = Date.now();
+        endTime = now + 15 * 60 * 1000;
+        localStorage.setItem('countdownEndTime', endTime);
+      } else {
+        endTime = parseInt(endTime);
+      }
+
+      const countdown = setInterval(() => {
+        const now = Date.now();
+        const remaining = endTime - now;
+
+        if (remaining <= 0) {
+          clearInterval(countdown);
+          timerEl.textContent = "Expired";
+          showFailure();
+          return;
+        }
+
+        const minutes = Math.floor(remaining / 1000 / 60);
+        const seconds = Math.floor((remaining / 1000) % 60);
+
+        timerEl.textContent = `Expires in : ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // Copy function
+    function copyAddress() {
+      const text = document.getElementById('address').innerText;
+      navigator.clipboard.writeText(text);
+      const tooltip = document.getElementById('copyTooltip');
+      tooltip.innerText = "Copied!";
+      setTimeout(() => tooltip.innerText = "Tap “Copy” to copy address", 2000);
+    }
+
+    // Payment simulation
+    function submitPayment() {
+      const overlay = document.getElementById('paymentOverlay');
+      const failText = document.getElementById('failText');
+      overlay.style.display = 'flex';
+      failText.style.display = 'none';
+      overlay.querySelector('.payment-loader').style.display = 'block';
+
+      setTimeout(() => {
+        overlay.querySelector('.payment-loader').style.display = 'none';
+        failText.style.display = 'block';
+      }, 30000);
+    }
+
+    function showFailure() {
+      const overlay = document.getElementById('paymentOverlay');
+      overlay.style.display = 'flex';
+      overlay.querySelector('.payment-loader').style.display = 'none';
+      document.getElementById('failText').style.display = 'block';
+    }
+  </script>
+
+</body>
+</html>
